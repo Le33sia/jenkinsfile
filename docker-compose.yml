@@ -1,0 +1,52 @@
+version: '2'
+services:
+  mariadb:
+    build:
+      context: .
+      dockerfile: Dockerfile.mariadb
+    container_name: mariadb-container
+    environment:
+      MYSQL_ROOT_PASSWORD: myrootpassword
+      MYSQL_DATABASE: gogs
+      MYSQL_USER: gogs
+      MYSQL_PASSWORD: mygogspassword
+      MYSQL_HOST: 0.0.0.0:3306
+      GOGS_DATABASE_HOST: mariadb-container
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - gogs_network
+
+  gogs:
+    build:
+      context: .
+      dockerfile: Dockerfile.gogs
+    container_name: gogs-container
+    environment:
+      USER_UID: 1000  # Adjust this UID as needed
+      USER_GID: 1000  # Adjust this GID as needed
+      GOGS_CUSTOM: /data/gogs/conf
+      GOGS_RUN_USER: git
+      GOGS_RUN_MODE: prod
+      GOGS_DATABASE_HOST: mariadb
+      GOGS_DATABASE_USER: gogs
+      GOGS_DATABASE_PASSWORD: mygogspassword
+      GOGS_DATABASE_NAME: gogs
+      GOGS_HOST: 10.0.0.211:3000
+    ports:
+      - "10022:22"
+      - "3000:3000"
+    volumes:
+      - gogs_data:/data
+      - gogs_conf:/data/gogs/conf
+    networks:
+      - gogs_network
+
+networks:
+  gogs_network:
+
+volumes:
+  mariadb_data:
+  gogs_data:
+  gogs_conf:
+
