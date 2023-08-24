@@ -1,0 +1,8 @@
+FROM mariadb:latest
+ENV MYSQL_ROOT_PASSWORD=myrootpassword
+ENV MYSQL_DATABASE=gogs
+ENV MYSQL_USER=gogs
+ENV MYSQL_PASSWORD=mygogspassword
+
+# COPY ./my-custom-mariadb-config.cnf /etc/mysql/conf.d/
+EXPOSE 3306
