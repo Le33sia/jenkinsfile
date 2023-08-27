@@ -1,48 +1,67 @@
 pipeline {
     agent any
 
-     stages {
-        stage('Start SSH Agent') {
-            steps {
-                sshagent(['cred_docker']) {
-                    
-                }
-            }
-        }
+    environment {
+        DOCKER_IMAGE_NAME = 'gogsimage'
+        DOCKER_IMAGE_TAG = 'latest'
+        SERVER_USERNAME = 'dev'
+        SERVER_IP = '10.0.0.50'
+        REMOTE_DIRECTORY = '/app/'
+    }
 
-        stage('Cleanup') {
-            steps {
-                sh 'docker system prune -a --volumes -f'
-            }
-        }
-
-        stage('Run Docker Compose') {
-            steps {
-                sh 'docker-compose up -d'
-                sleep 15
-                sh 'docker ps'
-                sh 'docker-compose down -v --remove-orphans'
-                sh 'docker images'
-                
-            }
-        }
-        
-        stage('Deploy to Ubuntu_Server') {
+    stages {
+        stage('Cleanup Old Data') {
             steps {
                 script {
-                    sshagent(['cred_docker']) {
-                       
-                        sh 'scp mymariadb-image.tar mygogs-image.tar git@10.0.0.35:/home/git/workspace/'
-                    }  
-                    sshagent(['cred_docker']) {
-                        sh 'scp docker-compose.yml git@10.0.0.35:/home/git/workspace/'
-                    }
-                    
-                    sshagent(['cred_docker']) {
-                        sh 'ssh git@10.0.0.35 "cd /home/git/workspace/ && docker load -i mymariadb-image.tar && docker load -i mygogs-image.tar && docker-compose up -d"'
-                    }
+                    // Delete old data in Docker (e.g., containers, images, volumes)
+                    sh 'docker system prune -a --volumes -f'
                 }
             }
         }
+
+        stage('Build and Save Image') {
+            steps {
+                script {
+                    // Build your Docker image
+                    docker.build "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+
+                    // Save the Docker image as a tar file
+                    sh "docker save -o ${DOCKER_IMAGE_NAME}_${DOCKER_IMAGE_TAG}.tar ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Transfer Files and Run Docker Compose') {
+    steps {
+        script {
+            // Transfer the image tar file and docker-compose.yml to the remote server
+            sshPublisher(
+                publishers: [sshPublisherDesc(
+                    configName: 'Prod_Server', // Name of the SSH server configuration
+                    transfers: [
+                        sshTransfer(
+                            sourceFiles: "${DOCKER_IMAGE_NAME}_${DOCKER_IMAGE_TAG}.tar", 
+                            remoteDirectory: REMOTE_DIRECTORY // Remote directory for the image tar file
+                        ),
+                        sshTransfer(
+                            sourceFiles: "docker-compose.yml",
+                            remoteDirectory: REMOTE_DIRECTORY // Remote directory for the docker-compose.yml file
+                        )
+                    ]
+                )]
+            )
+
+            // Run commands on the remote server using SSH
+            sshScript(
+                remote: 'Prod_Server',
+                script: [
+                    "cd ${REMOTE_DIRECTORY}",
+                    "docker load -i ${DOCKER_IMAGE_NAME}_${DOCKER_IMAGE_TAG}.tar",
+                    "sudo -u git docker compose up -d"
+                ]
+            )
+        }
     }
-}   
+}
+    }
+}
