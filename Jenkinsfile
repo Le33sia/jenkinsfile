@@ -30,7 +30,6 @@ pipeline {
                 }
             }
         }
-
         stage('Transfer Files and Run Docker Compose') {
     steps {
         script {
@@ -52,13 +51,16 @@ pipeline {
             )
 
             // Run commands on the remote server using SSH
-            sshScript(
-                remote: 'Prod_Server',
-                script: [
-                    "cd ${REMOTE_DIRECTORY}",
-                    "docker load -i ${DOCKER_IMAGE_NAME}_${DOCKER_IMAGE_TAG}.tar",
-                    "sudo -u git docker compose up -d"
-                ]
+            sshPublisher(
+                publishers: [sshPublisherDesc(
+                    configName: 'Prod_Server', // Name of the SSH server configuration
+                    transfers: [], // No need to transfer anything here
+                    execCommands: [
+                        "cd ${REMOTE_DIRECTORY}",
+                        "docker load -i ${DOCKER_IMAGE_NAME}_${DOCKER_IMAGE_TAG}.tar",
+                        "sudo -u git docker-compose up -d"
+                    ]
+                )]
             )
         }
     }
