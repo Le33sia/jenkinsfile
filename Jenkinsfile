@@ -1,4 +1,4 @@
-pipeline {
+ipeline {
     agent any
 
     environment {
@@ -19,10 +19,18 @@ pipeline {
                 sh 'docker build -t gogsimage .'
                 sleep 15
                 sh 'docker images'
+                sh 'docker compose build'
                 sh 'docker compose down -v --remove-orphans'
             }
         }
-
+        stage('Run Tests') {
+            
+            steps {
+                //sh 'go vet ./...'
+                //sh 'go test ./...'
+                echo "Testing"
+            }
+        }
         stage('Deploy to Ubuntu_Server') {
             steps {
                 sh 'docker save -o gogsimage.tar gogsimage:latest'  
@@ -36,3 +44,5 @@ pipeline {
         }
     }
 }        
+
+    
