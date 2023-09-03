@@ -10,7 +10,7 @@ services:
       USER_GID: 1001  # Adjust this GID as needed
       GOGS_RUN_USER: git
       GOGS_RUN_MODE: prod
-      GOGS_DATABASE_HOST: mariadb:3306
+      GOGS_DATABASE_HOST: mariadb:3306   #jjjjl
       GOGS_DATABASE_USER: gogs
       GOGS_DATABASE_PASSWORD: gogs
       GOGS_DATABASE_NAME: gogs
@@ -50,4 +50,4 @@ networks:
 volumes:
   mariadb_data:
   gogs_data:
-  gogs_conf:
+  gogs_conf: 
