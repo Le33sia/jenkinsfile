@@ -5,6 +5,7 @@ pipeline {
         DOCKER_IMAGE_NAME = 'gogsimage'
         DOCKER_IMAGE_TAG = 'latest'
         SERVER_IP = '10.0.0.50'
+        REMOTE_DIRECTORY = '~'
     }
     stages {
         stage('Cleanup') {
