@@ -1,11 +1,10 @@
-ipeline {
+pipeline {
     agent any
 
     environment {
         DOCKER_IMAGE_NAME = 'gogsimage'
         DOCKER_IMAGE_TAG = 'latest'
         SERVER_IP = '10.0.0.50'
-        //REMOTE_DIRECTORY = '/home/'
     }
     stages {
         stage('Cleanup') {
